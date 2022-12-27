@@ -8,15 +8,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" />
   </head>
-  <body style="background: #f7f7f7">
+  <body>
     <div class="container pt-5 shadow-sm" style="max-width: 600px; background: #fff; min-height: 100vh">
       <div class="container" style="max-width: 450px">
         <!-- login -->
         <div class="container" style="height: auto" id="loginContainer">
           <h1 class="text-center" style="margin-top: 50%">Chatto</h1>
-          <p class="text-center" style="color: #dee2e6; margin-top: -10px">Broadcast realtime chat</p>
+          <p class="text-center" style="color: #333; margin-top: -10px">Broadcast realtime chat</p>
           <form id="loginForm">
-            <input id="loginBTN" type="submit" class="bg-dark w-50" value="Join Main Room" style="margin: auto; display: block" />
+              <div class="container" style="width: 300px">
+            <input id="usn" type="text" placeholder="Enter your name..." required style="margin: auto; display: block">
+            <p id="name-empty">name cant be empty bro!<span style="color: #ED4245">*</span></p>
+            <input id="loginBTN" type="submit" class="bg-dark" value="Join Main Room" style="margin: auto; display: block; margin-top: 10px;" /></div>
           </form>
         </div>
         <!-- chat -->
@@ -24,10 +27,12 @@
           <h3 class="text-center"><%= chatroomTitle %></h3>
           <form id="chatForm">
             <div id="messagesList" class="border" style="overflow-x: auto; background: #f7f7f7">
+              <p class="promosi text-center">developed by me <a href="instagram.com/zidanaupal">@zidanaupal</a></p>
               <p class="joinedAlert text-center">You Joined the room</p>
             </div>
             <div class="d-flex justify-content-between">
-              <input id="message" type="text" class="mt-2" autocomplete="off" placeholder="Type a message..." />
+              <input id="message" type="text" class="mt-2" autocomplete="off" placeholder="Type a message..." maxlength="25" />
+              <div id="limitText" class="mt-2" style="margin: auto; display: block"><a>0</a></div>
               <button id="SendMSG" type="submit" class="bg-dark mt-2" style="margin: auto; display: block"><i class="bi bi-send-fill"></i></button>
             </div>
           </form>
@@ -41,6 +46,10 @@
       * {
         font-family: "Poppins", sans-serif;
       }
+      body {
+        background-image: url("views/img/doodles.png");
+        background-color: #f7f7f7;
+      }
       #loginBTN {
         outline: none;
         border-radius: 10px;
@@ -48,18 +57,38 @@
         color: #fff;
         padding: 10px;
         transition: 0.25s;
+        width: 300px;
+        margin-top: 20px;
       }
       #loginBTN:hover {
         transform: scale(0.9);
       }
-      .joinedAlert {
+      #usn {
+        background: #F5F8FE;
+        outline: none;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        padding: 5px;
+        width: 300px;
+      }
+      #name-empty {
+        font-size: 15px;
+        display: none;
+      }
+      #chatContainer {
+        display: none;
+        background-image: url("img/doodles.png");
+        background-repeat: repeat;
+      }
+      .joinedAlert, .promosi {
         background: #ebf8a4;
         max-width: 360px;
         display: block;
         margin: auto;
         border-radius: 10px;
         margin-top: 15px;
-        margin-bottom: 25px;
+        margin-bottom: 15px;
       }
       .myMSG {
         text-align: left;
@@ -98,17 +127,31 @@
         outline: none;
         border: 1px solid #dee2e6;
         border-radius: 5px 0px 0px 5px;
+        border-right: none;
       }
       #messagesList {
         height: 400px;
       }
-      #SendMSG {
+      #SendMSG,
+      #limitText {
         padding: 10px 15px;
         border-radius: 10px;
         border: none;
         outline: none;
         color: #fff;
         border-radius: 0px 5px 5px 0px;
+      }
+      #limitText {
+        border-radius: 0px;
+        background: #fff;
+        border-top: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        cursor: default;
+      }
+      #limitText a {
+        font-size: 14px;
+        background: #fff;
+        color: #007acc;
       }
     </style>
     <script src="/socket.io/socket.io.js"></script>
@@ -120,18 +163,26 @@
       const SendMSG = document.getElementById("SendMSG");
       const messagesList = document.getElementById("messagesList");
 
-      chatContainer.style.display = "none";
+      const usnInput = document.getElementById("usn");
 
       loginBTN.addEventListener("click", (e) => {
         e.preventDefault();
-        chatContainer.style.display = "block";
+        if (usnInput.value === "") {
+        document.getElementById("usn").style.border = "2px solid #ED4245";
+        document.getElementById("name-empty").style.display = "block";
+          
+      } else {
+           chatContainer.style.display = "block";
         loginContainer.style.display = "none";
         const data = {
           //  change id
-          userID: socket.id,
+          // diganti
+          userID: usn.value,
           message: message.value,
         };
         socket.emit("userJoined", data);
+      }
+       
 
         socket.on("userJoined", (userID, message) => {
           let theyJoined = document.createElement("p");
@@ -142,12 +193,28 @@
         });
       });
 
+      // limit input message
+      var messageInput = document.getElementById("message");
+      var limitText = document.querySelector("#limitText a");
+
+      messageInput.addEventListener("input", function () {
+        var textLength = messageInput.value.length;
+        limitText.textContent = textLength;
+
+        if (textLength == 25) {
+          limitText.style.color = "red";
+        } else {
+          limitText.style.color = "#007acc";
+        }
+      });
+
       SendMSG.addEventListener("click", (e) => {
         e.preventDefault();
         if (message.value) {
           const data = {
             //  change id
-            id: socket.id,
+            // diganti
+            id: usn.value,
             message: message.value,
           };
           // message
@@ -168,7 +235,11 @@
           messagesList.appendChild(popupMYMSG);
           popupMYMSG.appendChild(chatList);
           popupMYMSG.appendChild(Me);
+          // message sended
           message.value = "";
+          limitText.style.color = "#007acc";
+          textLength = 0;
+          limitText.textContent = textLength;
         }
       });
 
